@@ -348,3 +348,50 @@ pipeline{
 
 ```
 
+
+### Jenkinsfile, chamada do junit para gerar gráficos de testes
+
+```groovy
+pipeline{
+    agent any
+
+    environment {
+            IMAGE_NAME="simple-python-flask"
+        }
+
+
+    stages{
+        
+        stage('Image Build'){
+            steps{
+                script{
+                    image = docker.build("$IMAGE_NAME")
+                }
+            }
+        }
+
+        stage('Running Unit Test'){
+            steps{
+                script{
+                    image.inside("-v ${WORKSPACE}:/simplePythonApplication"){
+                        sh "nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
+
+                    }
+                }
+            }
+
+        }
+
+
+    }
+
+     post{
+            success{
+                 junit 'nosetests.xml'
+            }
+        }
+
+
+}
+
+```
