@@ -305,3 +305,46 @@ pipeline{
 }
 
 ```
+
+### Jenkinsfile stage de testes unitários 
+
+```groovy
+
+pipeline{
+    agent any
+
+    environment {
+            IMAGE_NAME="simple-python-flask"
+        }
+
+
+    stages{
+        
+        stage('Image Build'){
+            steps{
+                script{
+                    image = docker.build("$IMAGE_NAME")
+                }
+            }
+        }
+
+        stage('Running Unit Test'){
+            steps{
+                script{
+                    image.inside("-v ${WORKSPACE}:/simplePythonApplication"){
+                        sh "nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
+
+                    }
+                }
+            }
+
+        }
+
+
+    }
+
+
+}
+
+```
+
