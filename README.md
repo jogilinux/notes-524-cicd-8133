@@ -395,3 +395,13 @@ pipeline{
 }
 
 ```
+
+### SonarScanner commands
+
+```shell
+sonar-scanner \
+  -Dsonar.projectKey=simple_python_flask \
+  -Dsonar.sources=. \
+  -Dsonar.host.url=http://192.168.56.20:9000 \
+  -Dsonar.login=1f13d262acf3dfbded860e4aa3f0ad99c66d59bd
+```
