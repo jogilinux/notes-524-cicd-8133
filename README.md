@@ -179,44 +179,47 @@ https://docs.sonarqube.org/latest/analysis/coverage/
 
 =================================================================================
 
-AULA 3
+## AULA 3
 
 
 
 Instalando jenkins de maneira manual no Debian 10
 
 
-Primeiro vamos parar container do jenkins
+### Primeiro vamos parar container do jenkins
 
-
+```shell
 # docker container stop idconatiner-jenkins
+```
 
+### Adicionando chave do jekins ao apt 
 
-Adicionando chave do jekins ao apt 
-
+```shell
 # wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+```
 
+### Repo jenkins
 
-Repo jenkins
-
+```shell
 echo deb https://pkg.jenkins.io/debian binary/ > /etc/apt/sources.list.d/jenkins.list
+```
 
 
+### Atualizar lista de REPOS
 
-Atualizar lista de REPOS
-
+```shell
 # apt update
+```
 
+### Instalação do JDK 11
 
-Instalação do JDK 11
-
+```shell
 # apt install openjdk-11-jdk
+```
 
+### Primeiro pipeline-declarativo
 
-##
-
-Nosso primeiro pipeline
-
+```shell
 pipeline {
     
     agent any
@@ -234,12 +237,15 @@ pipeline {
         
 }
 
-###
+```
+### Gitea Deploy
 
+```shell
 docker run -dti --name gitea --restart always -v gitea:/data -p 3000:3000 -p 2222:22 gitea/gitea:latest
-
+```
 ### Options pipeline declarativo
 
+```
 pipeline {
     
     agent any
@@ -268,3 +274,4 @@ pipeline {
     }
         
 }
+```
