@@ -275,3 +275,33 @@ pipeline {
         
 }
 ```
+
+
+
+### Trabalhando com Jenkinsfile com docker
+
+```groovy
+pipeline{
+    agent any
+
+    environment {
+            IMAGE_NAME="simple-python-flask"
+        }
+
+
+    stages{
+        
+        stage('Image Build'){
+            steps{
+                script{
+                    image = docker.build("$IMAGE_NAME")
+                }
+            }
+        }
+
+    }
+
+
+}
+
+```
