@@ -451,3 +451,67 @@ pipeline{
 
     }
 ```
+
+
+### Jenkinsfile, adicionando ao pipeline resultado de analise do sonarqube
+
+```groovy
+pipeline{
+    agent any
+
+    environment {
+            IMAGE_NAME="simple-python-flask"
+        }
+
+
+    stages{
+        
+        stage('Image Build'){
+            steps{
+                script{
+                    image = docker.build("$IMAGE_NAME")
+                }
+            }
+        }
+
+        stage('Running Unit Test'){
+            steps{
+                script{
+                    image.inside("-v ${WORKSPACE}:/simplePythonApplication"){
+                        sh "nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
+
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube'){
+            steps{
+                script{
+                    def scannerPath = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarQube'){
+                        sh "${scannerPath}/bin/sonar-scanner -Dsonar.projectKey=simple_python_flask -Dsonar.sources=."
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube Analysis Result'){
+            steps{
+                timeout(time: 30, unit:'SECONDS'){
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+    }
+
+     post{
+            success{
+                 junit 'nosetests.xml'
+            }
+        }
+
+}
+
+```
