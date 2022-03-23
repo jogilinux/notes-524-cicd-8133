@@ -405,3 +405,49 @@ sonar-scanner \
   -Dsonar.host.url=http://192.168.56.20:9000 \
   -Dsonar.login=1f13d262acf3dfbded860e4aa3f0ad99c66d59bd
 ```
+
+### Adicionando stage do SonarQube na esteira com sonar-scanner
+
+```groovy
+pipeline{
+    agent any
+
+    environment {
+            IMAGE_NAME="simple-python-flask"
+        }
+
+
+    stages{
+        
+        stage('Image Build'){
+            steps{
+                script{
+                    image = docker.build("$IMAGE_NAME")
+                }
+            }
+        }
+
+        stage('Running Unit Test'){
+            steps{
+                script{
+                    image.inside("-v ${WORKSPACE}:/simplePythonApplication"){
+                        sh "nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
+
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube'){
+            steps{
+                script{
+                    def scannerPath = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarQube'){
+                        sh "${scannerPath}/bin/sonar-scanner -Dsonar.projectKey=simple_python_flask -Dsonar.sources=."
+                    }
+                }
+            }
+        }
+
+    }
+```
