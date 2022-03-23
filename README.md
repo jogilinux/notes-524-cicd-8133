@@ -515,3 +515,84 @@ pipeline{
 }
 
 ```
+
+### Deploy do container do Nexus 
+
+```shell
+# docker run -d -p 8081:8081 -p 8082:8082 -p 8083:8083 --name nexus --restart always -v nexus-data:/nexus-data sonatype/nexus3
+```
+
+### Testando push image para o NEXUS
+
+
+```groovy
+pipeline{
+    agent any
+
+    environment {
+            IMAGE_NAME="simple-python-flask"
+        }
+
+
+    stages{
+        
+        stage('Image Build'){
+            steps{
+                script{
+                    image = docker.build("$IMAGE_NAME")
+                }
+            }
+        }
+
+        stage('Running Unit Test'){
+            steps{
+                script{
+                    image.inside("-v ${WORKSPACE}:/simplePythonApplication"){
+                        sh "nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
+
+                    }
+                }
+            }
+        }
+/*
+        stage('SonarQube'){
+            steps{
+                script{
+                    def scannerPath = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarQube'){
+                        sh "${scannerPath}/bin/sonar-scanner -Dsonar.projectKey=simple_python_flask -Dsonar.sources=."
+                    }
+                }
+            }
+        }*/
+/*
+        stage('SonarQube Analysis Result'){
+            steps{
+                timeout(time: 30, unit:'SECONDS'){
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }*/
+
+        stage('Docker Push Nexus'){
+            steps{
+                script{
+                    docker.withRegistry("http://192.168.56.20:8082", "dde6cf89-e0ed-457e-a0cb-689eecf06d8f"){
+                        image.push()
+                    }
+                }
+            }
+
+        }
+
+    }
+
+     post{
+            success{
+                 junit 'nosetests.xml'
+            }
+        }
+
+}
+
+```
