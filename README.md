@@ -689,3 +689,101 @@ pipeline{
 }
 
 ```
+
+
+### Ajustando deploy para ambiente de homolog
+
+```groovy
+
+pipeline{
+    agent any
+
+    environment {
+            IMAGE_NAME="simple-python-flask"
+            IMAGE_TAG="0.0.${BUILD_ID}"
+            NEXUS_SERVER="192.168.56.20:8082"
+            HTTP_PROTO="http://"
+            SERVER_HOMOLOG="tcp://192.168.56.30:2375"
+            JENKINS_CREDEN="dde6cf89-e0ed-457e-a0cb-689eecf06d8f"
+        }
+
+
+    stages{
+        
+        stage('Image Build'){
+            steps{
+                script{
+                    image = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                }
+            }
+        }
+
+        stage('Running Unit Test'){
+            steps{
+                script{
+                    image.inside("-v ${WORKSPACE}:/simplePythonApplication"){
+                        sh "nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
+
+                    }
+                }
+            }
+        }
+/*
+        stage('SonarQube'){
+            steps{
+                script{
+                    def scannerPath = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarQube'){
+                        sh "${scannerPath}/bin/sonar-scanner -Dsonar.projectKey=simple_python_flask -Dsonar.sources=."
+                    }
+                }
+            }
+        }*/
+/*
+        stage('SonarQube Analysis Result'){
+            steps{
+                timeout(time: 30, unit:'SECONDS'){
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }*/
+
+        stage('Docker Push Nexus'){
+            steps{
+                script{
+                    docker.withRegistry("http://192.168.56.20:8082", "dde6cf89-e0ed-457e-a0cb-689eecf06d8f"){
+                        image.push()
+                    }
+                }
+            }
+
+        }
+
+        stage('Deploy for homolog'){
+            steps{
+                script{
+                    docker.withServer("${SERVER_HOMOLOG}"){
+                        docker.withRegistry("${HTTP_PROTO}${NEXUS_SERVER}","${JENKINS_CREDEN}"){
+                            image = docker.image("${NEXUS_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}")
+                                image.pull()
+                                sh """
+                                        sed 's|IMAGE|${NEXUS_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}|g' docker-compose.yml > docker-compose-homolog.yml
+                                   """
+                                    sh "docker stack deploy -c docker-compose-homolog.yml simple-python-flask"
+                        }
+                    }
+                }
+            }
+
+        }
+
+    }
+
+     post{
+            success{
+                 junit 'nosetests.xml'
+            }
+        }
+
+}
+```
