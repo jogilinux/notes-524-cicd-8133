@@ -795,3 +795,22 @@ pipeline{
 docker run -dti --name selenium-grid --restart always -p 4444:4444 -v /dev/shm:/dev/shm selenium/standalone-firefox
 
 ```
+
+### Atualizando dockerfile para testes com selenium
+
+```shell
+FROM python:3.9.10-slim-bullseye
+
+WORKDIR simplePythonApplication/
+
+ADD . /simplePythonApplication/
+
+RUN apt update; apt install -y python3-mysqldb libmariadb-dev gcc
+
+RUN pip install -r requirements.txt
+
+EXPOSE 5000
+
+CMD python3 app.py
+
+```
