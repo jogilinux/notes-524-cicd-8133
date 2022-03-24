@@ -787,3 +787,11 @@ pipeline{
 
 }
 ```
+
+
+### testes funcional da aplicação com selenium
+
+```shell
+docker run -dti --name selenium-grid --restart always -p 4444:4444 -v /dev/shm:/dev/shm selenium/standalone-firefox
+
+```
